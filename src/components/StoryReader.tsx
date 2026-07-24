@@ -21,12 +21,38 @@ import {
   FastForward,
   Mail,
   Twitter,
-  Instagram
+  Instagram,
+  Award,
+  Trophy,
+  Star,
+  CheckCircle2,
+  Medal,
+  Palette
 } from 'lucide-react';
 import { Story } from '../types';
 import { AdSenseUnit } from './AdSenseUnit';
+import { ColoringBook } from './ColoringBook';
+import { CertificateModal } from './CertificateModal';
 
-// Curated high quality children fairytale illustrations for instant reliable fallback
+// Topic-aware fallback illustrations pool ensuring rich visual variety
+const TOPIC_FALLBACKS: Record<string, string[]> = {
+  cat: [
+    'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=1000&q=80'
+  ],
+  castle: [
+    'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1000&q=80'
+  ],
+  nature: [
+    'https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=1000&q=80'
+  ],
+  art: [
+    'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=1000&q=80'
+  ]
+};
+
 const FALLBACK_ILLUSTRATIONS = [
   'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1000&q=80',
   'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=1000&q=80',
@@ -43,6 +69,7 @@ interface StoryReaderProps {
   onBackToLibrary: () => void;
   allStories?: Story[];
   onSelectStory?: (story: Story) => void;
+  siteTheme?: 'light' | 'dark';
 }
 
 export const StoryReader: React.FC<StoryReaderProps> = ({
@@ -51,13 +78,31 @@ export const StoryReader: React.FC<StoryReaderProps> = ({
   onToggleFavorite,
   onBackToLibrary,
   allStories = [],
-  onSelectStory
+  onSelectStory,
+  siteTheme
 }) => {
-  // Reading Mode Theme State
-  const [readingTheme, setReadingTheme] = useState<'light' | 'dark' | 'sepia'>('light');
+  // Reading Mode Theme State (Defaults or syncs with siteTheme)
+  const [readingTheme, setReadingTheme] = useState<'light' | 'dark' | 'sepia'>(() => {
+    return siteTheme === 'dark' ? 'dark' : 'light';
+  });
+
+  // Automatically update readingTheme when siteTheme changes (unless user explicitly selected sepia)
+  useEffect(() => {
+    if (siteTheme === 'dark') {
+      setReadingTheme('dark');
+    } else if (siteTheme === 'light') {
+      setReadingTheme('light');
+    }
+  }, [siteTheme]);
 
   // Font Size Control State
   const [fontSizeLevel, setFontSizeLevel] = useState<number>(2);
+
+  // Certificate Display State
+  const [showCertificate, setShowCertificate] = useState<boolean>(false);
+
+  // Coloring Book Display State
+  const [showColoringBook, setShowColoringBook] = useState<boolean>(false);
 
   // Text-To-Speech Sequential State
   const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
@@ -68,6 +113,13 @@ export const StoryReader: React.FC<StoryReaderProps> = ({
   const [speechRate, setSpeechRate] = useState<number>(1.0); // Ideal default storytelling speed (1.0x)
   const [speechPitch, setSpeechPitch] = useState<number>(1.25); // Gentle, warm female pitch
   const [showVoiceSettings, setShowVoiceSettings] = useState(false);
+
+  // Natural Human Gemini AI Voice State
+  const [useNaturalAI, setUseNaturalAI] = useState<boolean>(true);
+  const [selectedGeminiVoice, setSelectedGeminiVoice] = useState<string>('Kore');
+  const [isFetchingTTS, setIsFetchingTTS] = useState<boolean>(false);
+  const [isPlayingNaturalAudio, setIsPlayingNaturalAudio] = useState<boolean>(false);
+  const naturalAudioRef = useRef<HTMLAudioElement | null>(null);
 
   // References for Sequential Audio Queue & Instant Settings Reactivity
   const speechChunksRef = useRef<string[]>([]);
@@ -286,9 +338,167 @@ export const StoryReader: React.FC<StoryReaderProps> = ({
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
     }
+    if (naturalAudioRef.current) {
+      naturalAudioRef.current.pause();
+      naturalAudioRef.current = null;
+    }
+    setIsPlayingNaturalAudio(false);
     setIsPlayingSpeech(false);
     setIsPausedSpeech(false);
     setCurrentChunkIdx(-1);
+  };
+
+  // Helper to convert base64 audio/PCM to playable Object URL
+  const createAudioFromBase64 = (base64Data: string, mimeType: string) => {
+    if (mimeType.includes('mp3') || mimeType.includes('mpeg') || mimeType.includes('ogg')) {
+      return `data:${mimeType};base64,${base64Data}`;
+    }
+
+    try {
+      // Build standard RIFF WAV header wrapper for 24kHz 16-bit mono PCM
+      const binaryStr = atob(base64Data);
+      const len = binaryStr.length;
+      const buffer = new ArrayBuffer(44 + len);
+      const view = new DataView(buffer);
+
+      view.setUint32(0, 0x52494646, false); // "RIFF"
+      view.setUint32(4, 36 + len, true);
+      view.setUint32(8, 0x57415645, false); // "WAVE"
+      view.setUint32(12, 0x666d7420, false); // "fmt "
+      view.setUint32(16, 16, true);
+      view.setUint16(20, 1, true); // PCM
+      view.setUint16(22, 1, true); // Mono
+      view.setUint32(24, 24000, true); // 24kHz
+      view.setUint32(28, 24000 * 2, true);
+      view.setUint16(32, 2, true);
+      view.setUint16(34, 16, true);
+      view.setUint32(36, 0x64617461, false); // "data"
+      view.setUint32(40, len, true);
+
+      const bytes = new Uint8Array(buffer, 44);
+      for (let i = 0; i < len; i++) {
+        bytes[i] = binaryStr.charCodeAt(i);
+      }
+
+      const blob = new Blob([buffer], { type: 'audio/wav' });
+      return URL.createObjectURL(blob);
+    } catch {
+      return `data:audio/wav;base64,${base64Data}`;
+    }
+  };
+
+  // Audio Cache for fast chapter-level playback
+  const ttsAudioCacheRef = useRef<Map<string, string>>(new Map());
+
+  // Natural Gemini AI Voice Handler
+  const handlePlayNaturalTTS = async () => {
+    if (isPlayingNaturalAudio && naturalAudioRef.current) {
+      naturalAudioRef.current.pause();
+      setIsPlayingNaturalAudio(false);
+      return;
+    }
+
+    if (naturalAudioRef.current) {
+      naturalAudioRef.current.play();
+      setIsPlayingNaturalAudio(true);
+      return;
+    }
+
+    stopSpeech();
+
+    // Target clean concise text (title + intro/first chapter, max 380 chars) for fast ~1.5s TTS generation
+    const firstChapter = story.chapters[0];
+    const firstPara = firstChapter?.paragraphs[0] || story.subtitle || '';
+    const textToNarrate = `${story.title}. ${firstChapter?.chapterTitle ? firstChapter.chapterTitle + '. ' : ''}${firstPara}`.substring(0, 380);
+    const cacheKey = `${selectedGeminiVoice}_${story.id}_${textToNarrate.substring(0, 30)}`;
+
+    // Check cache first for 0ms instant play
+    if (ttsAudioCacheRef.current.has(cacheKey)) {
+      const cachedSrc = ttsAudioCacheRef.current.get(cacheKey)!;
+      const audio = new Audio(cachedSrc);
+      naturalAudioRef.current = audio;
+
+      audio.onended = () => {
+        setIsPlayingNaturalAudio(false);
+        naturalAudioRef.current = null;
+      };
+
+      await audio.play();
+      setIsPlayingNaturalAudio(true);
+      return;
+    }
+
+    setIsFetchingTTS(true);
+
+    try {
+      const res = await fetch('/api/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          text: textToNarrate, 
+          voiceName: selectedGeminiVoice 
+        })
+      });
+
+      const data = await res.json();
+      if (data.audio) {
+        const audioSrc = createAudioFromBase64(data.audio, data.mimeType || 'audio/wav');
+        ttsAudioCacheRef.current.set(cacheKey, audioSrc);
+
+        const audio = new Audio(audioSrc);
+        naturalAudioRef.current = audio;
+
+        audio.onended = () => {
+          setIsPlayingNaturalAudio(false);
+          naturalAudioRef.current = null;
+        };
+
+        audio.onerror = () => {
+          setIsPlayingNaturalAudio(false);
+          naturalAudioRef.current = null;
+          handleToggleSpeech(); // Fallback
+        };
+
+        await audio.play();
+        setIsPlayingNaturalAudio(true);
+      } else {
+        handleToggleSpeech(); // Fallback
+      }
+    } catch (err) {
+      console.warn('TTS request failed, falling back to Web Speech API:', err);
+      handleToggleSpeech();
+    } finally {
+      setIsFetchingTTS(false);
+    }
+  };
+
+  // Chapter Image Regeneration Handler
+  const handleRegenerateImage = async (chapterIdx: number) => {
+    setGeneratingImageIdx(chapterIdx);
+    try {
+      const ch = story.chapters[chapterIdx];
+      const res = await fetch('/api/generate-chapter-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: ch?.imagePrompt,
+          chapterTitle: ch?.chapterTitle,
+          storyTitle: story.title
+        })
+      });
+
+      const data = await res.json();
+      if (data.imageUrl) {
+        setChapterImages((prev) => ({
+          ...prev,
+          [chapterIdx]: data.imageUrl
+        }));
+      }
+    } catch (err) {
+      console.error('Failed to regenerate chapter image:', err);
+    } finally {
+      setGeneratingImageIdx(null);
+    }
   };
 
   // Text size classes mapping
@@ -311,7 +521,7 @@ export const StoryReader: React.FC<StoryReaderProps> = ({
       case 'sepia':
         return 'bg-[#fbf4e4] border-[#ebd8ba] text-[#2c2016] shadow-xl';
       default:
-        return 'bg-white border-purple-100 text-slate-900 shadow-xl';
+        return 'bg-white dark:bg-slate-800 border-purple-100 dark:border-slate-700 text-slate-900 dark:text-slate-100 shadow-xl';
     }
   };
 
@@ -322,7 +532,7 @@ export const StoryReader: React.FC<StoryReaderProps> = ({
       case 'sepia':
         return 'text-[#382b20]';
       default:
-        return 'text-slate-800';
+        return 'text-slate-800 dark:text-slate-200';
     }
   };
 
@@ -333,7 +543,7 @@ export const StoryReader: React.FC<StoryReaderProps> = ({
       case 'sepia':
         return 'text-[#722f12]';
       default:
-        return 'text-purple-900';
+        return 'text-purple-900 dark:text-purple-300';
     }
   };
 
@@ -489,7 +699,7 @@ export const StoryReader: React.FC<StoryReaderProps> = ({
           ? 'bg-slate-800/95 border-slate-700 text-white backdrop-blur-md'
           : readingTheme === 'sepia'
           ? 'bg-[#f3e5cb]/95 border-[#dfcaa3] text-[#2c2016] backdrop-blur-md'
-          : 'bg-white/95 border-purple-100 text-slate-900 backdrop-blur-md'
+          : 'bg-white/95 dark:bg-slate-800/95 border-purple-100 dark:border-slate-700 text-slate-900 dark:text-slate-100 backdrop-blur-md'
       }`}>
         
         {/* Back Button */}
@@ -562,9 +772,20 @@ export const StoryReader: React.FC<StoryReaderProps> = ({
           </button>
         </div>
 
-        {/* Audio Player & Print Controls */}
-        <div className="flex items-center gap-2">
+        {/* Audio Player, Print & Coloring Controls */}
+        <div className="flex items-center gap-2 flex-wrap">
           
+          {/* Coloring Book Button */}
+          <button
+            type="button"
+            onClick={() => setShowColoringBook(true)}
+            className="px-3.5 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 active:scale-95 text-slate-950 font-black rounded-xl text-xs flex items-center gap-1.5 shadow-md transition cursor-pointer"
+            title="Siyah-Beyaz Çizimleri Sayfa Olarak Boya veya Yazdır"
+          >
+            <Palette className="w-4 h-4 text-slate-950" />
+            <span>🎨 Boyama Kitabı</span>
+          </button>
+
           {/* Print / Export PDF Button */}
           <button
             type="button"
@@ -576,7 +797,37 @@ export const StoryReader: React.FC<StoryReaderProps> = ({
             <span>Yazdır / PDF İndir 🖨️</span>
           </button>
 
-          {/* Speech Play/Pause */}
+          {/* Natural Human Voice Gemini AI TTS Button */}
+          <button
+            type="button"
+            onClick={handlePlayNaturalTTS}
+            disabled={isFetchingTTS}
+            className={`px-3.5 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 transition cursor-pointer shadow-md ${
+              isPlayingNaturalAudio
+                ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white animate-pulse'
+                : 'bg-gradient-to-r from-amber-400 via-orange-500 to-purple-600 text-slate-950 hover:brightness-110'
+            }`}
+            title="Doğal ve İnsansı Yapay Zeka Anne/Masalcı Sesi"
+          >
+            {isFetchingTTS ? (
+              <>
+                <Sparkles className="w-4 h-4 text-slate-950 animate-spin" />
+                <span>Doğal Ses Hazırlanıyor...</span>
+              </>
+            ) : isPlayingNaturalAudio ? (
+              <>
+                <Pause className="w-4 h-4 text-white" />
+                <span>Doğal Sesi Duraklat</span>
+              </>
+            ) : (
+              <>
+                <Mic className="w-4 h-4 text-slate-950" />
+                <span>Doğal Sesle Dinle 🎙️</span>
+              </>
+            )}
+          </button>
+
+          {/* Standard Browser Speech Play/Pause */}
           <button
             type="button"
             onClick={handleToggleSpeech}
@@ -587,11 +838,11 @@ export const StoryReader: React.FC<StoryReaderProps> = ({
             }`}
           >
             {isPlayingSpeech && !isPausedSpeech ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-            <span>{isPlayingSpeech ? (isPausedSpeech ? 'Devam Et' : 'Duraklat') : 'Sesli Dinle 🔊'}</span>
+            <span>{isPlayingSpeech ? (isPausedSpeech ? 'Devam Et' : 'Duraklat') : 'Tarayıcı Sesi 🔊'}</span>
           </button>
 
           {/* Stop Speech */}
-          {isPlayingSpeech && (
+          {(isPlayingSpeech || isPlayingNaturalAudio) && (
             <button
               type="button"
               onClick={stopSpeech}
@@ -825,12 +1076,12 @@ export const StoryReader: React.FC<StoryReaderProps> = ({
 
                     <button
                       type="button"
-                      onClick={() => handleGenerateChapterImage(cIdx, chapter.imagePrompt)}
+                      onClick={() => handleRegenerateImage(cIdx)}
                       disabled={isGeneratingThis}
                       className="text-slate-900 bg-amber-300 hover:bg-amber-400 font-extrabold text-[11px] px-3 py-1.5 rounded-xl transition flex items-center gap-1 cursor-pointer disabled:opacity-50 shadow-xs"
                     >
-                      <RotateCcw className="w-3 h-3" />
-                      <span>{isGeneratingThis ? 'Çiziliyor...' : 'Görseli Yenile'}</span>
+                      <Sparkles className="w-3 h-3 text-purple-800" />
+                      <span>{isGeneratingThis ? 'Gemini AI Çiziyor...' : 'Görseli Yeniden Üret 🎨'}</span>
                     </button>
                   </div>
                 </div>
@@ -929,6 +1180,118 @@ export const StoryReader: React.FC<StoryReaderProps> = ({
             </p>
           </div>
         )}
+
+        {/* 🎓 Minik Okur Başarı Sertifikası & Rozeti */}
+        <div className="mt-10 p-6 sm:p-8 bg-gradient-to-br from-amber-500/10 via-purple-500/10 to-indigo-500/10 dark:from-amber-950/40 dark:via-purple-950/40 dark:to-slate-900 border-2 border-amber-400/80 dark:border-amber-500/80 rounded-3xl text-center space-y-5 shadow-lg relative overflow-hidden">
+          <div className="flex flex-col items-center justify-center space-y-2">
+            <div className="p-3 bg-gradient-to-tr from-amber-400 to-amber-200 text-amber-950 rounded-2xl shadow-md inline-flex items-center justify-center">
+              <Trophy className="w-8 h-8 animate-bounce" />
+            </div>
+            <h3 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white">
+              Tebrikler Minik Okur! 🌟
+            </h3>
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 font-medium max-w-md">
+              Bu {story.contentType.toLowerCase()} eserini başarıyla okuyup tamamladın. Özel Başarı Sertifikanı almak ister misin?
+            </p>
+          </div>
+
+          {!showCertificate ? (
+            <button
+              type="button"
+              onClick={() => setShowCertificate(true)}
+              className="px-6 py-3.5 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:to-orange-600 text-slate-950 font-black rounded-2xl text-xs sm:text-sm shadow-lg shadow-amber-500/20 hover:scale-105 transition cursor-pointer inline-flex items-center gap-2.5"
+            >
+              <Award className="w-5 h-5 text-slate-950" />
+              <span>🏅 Minik Okur Başarı Sertifikamı Gör & İndir</span>
+            </button>
+          ) : (
+            <div className="space-y-6 pt-2">
+              {/* Printable Official Certificate Document Card */}
+              <div className="p-6 sm:p-10 bg-amber-50/90 dark:bg-slate-900 border-8 border-double border-amber-400 dark:border-amber-500 rounded-3xl text-center space-y-6 shadow-2xl relative text-slate-900 dark:text-slate-100">
+                
+                {/* Certificate Ribbon Header */}
+                <div className="space-y-1">
+                  <div className="inline-flex items-center gap-2 text-amber-700 dark:text-amber-400 text-xs font-black tracking-widest uppercase">
+                    <Star className="w-4 h-4 fill-amber-400 text-amber-500" />
+                    <span>Çocukla Okuyoruz — Resmi Başarı Belgesi</span>
+                    <Star className="w-4 h-4 fill-amber-400 text-amber-500" />
+                  </div>
+                  <h2 className="text-xl sm:text-3xl font-black font-serif text-amber-900 dark:text-amber-300 tracking-wide">
+                    MİNİK OKUR BAŞARI SERTİFİKASI
+                  </h2>
+                </div>
+
+                {/* Recipient Name */}
+                <div className="space-y-1 py-2 border-y border-amber-300/60 dark:border-amber-700/60 max-w-lg mx-auto">
+                  <span className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider block">Bu Belge Gururla Sunulur:</span>
+                  <h1 className="text-2xl sm:text-4xl font-black font-serif text-purple-900 dark:text-purple-300">
+                    {story.childName ? story.childName : 'Değerli Minik Okurumuz'}
+                  </h1>
+                </div>
+
+                {/* Description */}
+                <p className="text-xs sm:text-base font-semibold leading-relaxed text-slate-800 dark:text-slate-200 max-w-xl mx-auto">
+                  "<span className="font-bold text-amber-800 dark:text-amber-300">{story.title}</span>" başlıklı {story.contentType.toLowerCase()} eserini büyük bir merak, dikkat ve gayretle okuyup tamamlayarak milli ve manevi değerlerimizi öğrenme yolunda önemli bir adım atmıştır.
+                </p>
+
+                {/* Badges / Medals Row */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                  <div className="p-3 bg-white dark:bg-slate-800 border border-amber-300 dark:border-slate-700 rounded-2xl flex flex-col items-center space-y-1 shadow-xs">
+                    <Medal className="w-6 h-6 text-amber-500" />
+                    <span className="font-extrabold text-xs text-amber-900 dark:text-amber-300">Günün Okuru</span>
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400">Üstün Gayret</span>
+                  </div>
+
+                  <div className="p-3 bg-white dark:bg-slate-800 border border-amber-300 dark:border-slate-700 rounded-2xl flex flex-col items-center space-y-1 shadow-xs">
+                    <Star className="w-6 h-6 text-purple-500" />
+                    <span className="font-extrabold text-xs text-purple-900 dark:text-purple-300">Kitap Kaşifi</span>
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400">Meraklı Minik</span>
+                  </div>
+
+                  <div className="p-3 bg-white dark:bg-slate-800 border border-amber-300 dark:border-slate-700 rounded-2xl flex flex-col items-center space-y-1 shadow-xs">
+                    <CheckCircle2 className="w-6 h-6 text-emerald-500" />
+                    <span className="font-extrabold text-xs text-emerald-900 dark:text-emerald-300">Gönül Dostu</span>
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400">Erdemli Karakter</span>
+                  </div>
+                </div>
+
+                {/* Footer Signature & Date */}
+                <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-bold text-slate-600 dark:text-slate-300 border-t border-amber-300/60 dark:border-amber-700/60">
+                  <div className="text-left">
+                    <span className="block text-[10px] text-slate-400 uppercase">Tarih:</span>
+                    <span>{new Date().toLocaleDateString('tr-TR')}</span>
+                  </div>
+
+                  <div className="text-right">
+                    <span className="block text-[10px] text-slate-400 uppercase">Onaylayan & Eser Sahibi:</span>
+                    <span className="font-serif font-black text-slate-900 dark:text-white">Sefa Buran (Yayın Kurulu)</span>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Action buttons */}
+              <div className="flex flex-wrap items-center justify-center gap-3 print:hidden">
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  className="px-5 py-3 bg-purple-600 hover:bg-purple-700 text-white font-extrabold rounded-2xl text-xs sm:text-sm shadow-md transition cursor-pointer flex items-center gap-2"
+                >
+                  <Printer className="w-4 h-4" />
+                  <span>Sertifikayı Yazdır / PDF İndir 🖨️</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowCertificate(false)}
+                  className="px-5 py-3 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 text-slate-800 dark:text-slate-200 font-bold rounded-2xl text-xs sm:text-sm transition cursor-pointer"
+                >
+                  Gizle
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* 📲 Sosyal Medyada Paylaş Butonları (Hidden in Print) */}
         <div className="mt-10 p-6 bg-purple-50/80 dark:bg-slate-800/80 border border-purple-200 dark:border-slate-700 rounded-3xl space-y-4 text-center print:hidden">
@@ -1114,6 +1477,22 @@ export const StoryReader: React.FC<StoryReaderProps> = ({
         )}
 
       </article>
+
+      {/* Coloring Book Modal */}
+      {showColoringBook && (
+        <ColoringBook
+          story={story}
+          onClose={() => setShowColoringBook(false)}
+        />
+      )}
+
+      {/* Certificate Modal */}
+      {showCertificate && (
+        <CertificateModal
+          story={story}
+          onClose={() => setShowCertificate(false)}
+        />
+      )}
 
     </div>
   );

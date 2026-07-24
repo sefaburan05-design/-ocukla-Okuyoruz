@@ -205,6 +205,7 @@ export default function App() {
                 onBackToLibrary={() => setActiveTab('library')}
                 allStories={stories}
                 onSelectStory={handleSelectStory}
+                siteTheme={siteTheme}
               />
             )}
 

@@ -31,8 +31,8 @@ export const SAMPLE_STORIES: Story[] = [
           'Balon, Can ona doğru yaklaştıkça hafifçe havalanıyor ve sanki neşeyle gülümsüyordu. İpinde minik, gümüş bir pusula asılıydı. Can pusulaya dokunduğunda tatlı bir meltem esti ve yumuşacık bir ses fısıldadı: "Merhaba Can! Bugün kalbi sevgi dolu çocukların ziyaret edebildiği Pamuk Şato\'ya yolculuk yapmaya hazır mısın?"',
           'Can heyecanla gözlerini ışıldatarak, "Evet, çok isterim!" dedi. Balonun ipini incitmeden tuttu ve birlikte rüzgarın tatlı kucağında süzülmeye başladılar.'
         ],
-        imagePrompt: 'A cute young boy holding a glowing blue balloon standing in a sunny flower garden, children storybook illustration style, soft colors',
-        generatedImageUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80'
+        imagePrompt: 'A cute young boy holding a glowing blue balloon standing in a sunny flower garden, children storybook illustration style, soft pastel colors',
+        generatedImageUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1000&q=80'
       },
       {
         chapterTitle: '2. Bölüm: Bulutların Üstündeki Sevgi Çeşmesi',
@@ -41,8 +41,8 @@ export const SAMPLE_STORIES: Story[] = [
           'Bulutların üzerinde minik, tatlı geyikler ve yardımsever kuşlar yaşıyordu. Diyarın ortasında ise kristal berraklığında bir "İyilik Çeşmesi" akıyordu. Çeşmenin yanındaki bilge tavşan Can\'ı saygıyla karşıladı ve şöyle dedi: "Hoş geldin Can! Bu çeşme, yeryüzünde büyüklere saygı gösteren, arkadaşlarıyla paylaşan çocukların sevgisiyle beslenir."',
           'Can, annesine ve babasına her zaman nasıl hürmet ettiğini, arkadaşı Ali ile oyuncaklarını nasıl neşeyle paylaştığını anlattı. Bunu duyan çeşme pırıl pırıl parıldamaya başladı.'
         ],
-        imagePrompt: 'Children storybook illustration of a young boy floating on a fluffy white cloud with cute starry fairies, magical atmosphere, bright pastel colors',
-        generatedImageUrl: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=800&q=80'
+        imagePrompt: 'Children storybook illustration of a fairytale cloud castle with crystal fountain and starry sky, magical atmosphere, pastel colors',
+        generatedImageUrl: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=1000&q=80'
       },
       {
         chapterTitle: '3. Bölüm: Paylaştıkça Çoğalan Sevinç',
@@ -52,7 +52,7 @@ export const SAMPLE_STORIES: Story[] = [
           'Güneş batarken balon Can\'ı tekrar kendi bahçesine bıraktı. Can, yaşadığı bu güzel masalı akşam sofrasında ailesine anlatmak için neşeyle eve doğru koştu.'
         ],
         imagePrompt: 'Happy ending children storybook illustration of a young boy surrounded by friendly animals in a fairytale forest, glowing sunlight',
-        generatedImageUrl: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=800&q=80'
+        generatedImageUrl: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=1000&q=80'
       }
     ]
   },
@@ -86,7 +86,7 @@ export const SAMPLE_STORIES: Story[] = [
           'Eğilip baktığında, minik kahverengi tüylü, ürkek gözlerle bakan minik bir yavru kedi gördü. Kedi soğuktan hafifçe titriyordu ve ön patisi incinmişti. Zeynep hemen çantasına uzandı, yavruyu incitmeden kucağına aldı ve "Korkma minik dostum, artık güvendesin" diyerek onu eve götürdü.'
         ],
         imagePrompt: 'A sweet little girl with a cute brown kitten in a green garden, whimsical children storybook style, warm lighting',
-        generatedImageUrl: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&w=800&q=80'
+        generatedImageUrl: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&w=1000&q=80'
       },
       {
         chapterTitle: '2. Bölüm: Şefkat ve Sorumluluk',
@@ -95,7 +95,7 @@ export const SAMPLE_STORIES: Story[] = [
           'Zeynep her gün okuldan geldikten sonra Fındık\'ın bakımını üstlendi, ilacını aksatmadan içirdi ve onunla şefkatle ilgilendi. Birkaç gün içinde Fındık iyileşti ve neşeyle mırlayarak Zeynep\'in etrafında koşmaya başladı. Zeynep, bir canlıya yardım etmenin insanı ne kadar mutlu ettiğini yürekten hissetti.'
         ],
         imagePrompt: 'A little girl taking care of a happy kitten indoors cozy home setting, heartwarming children illustration style',
-        generatedImageUrl: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=800&q=80'
+        generatedImageUrl: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=1000&q=80'
       }
     ]
   },
@@ -129,7 +129,7 @@ export const SAMPLE_STORIES: Story[] = [
           'Büyüklerime hürmet ederim,\nTatlı sözle selam veririm,\nDoğruluktur benim yolum,\nİyilikle yükselirim.'
         ],
         imagePrompt: 'A joyful young Turkish boy looking at a beautiful sunrise over peaceful hills with wildflowers, storybook illustration',
-        generatedImageUrl: 'https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=800&q=80'
+        generatedImageUrl: 'https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=1000&q=80'
       },
       {
         chapterTitle: '2. Kıta Demeti: Sevgi ve Birlik',
@@ -138,7 +138,7 @@ export const SAMPLE_STORIES: Story[] = [
           'Gönül açarız herkese,\nKulak veririz her sese,\nSevgi dolu kalbimizle,\nYürürüz biz geleceğe.'
         ],
         imagePrompt: 'Children holding hands under a bright blue sky with a glowing crescent moon and stars, warm pastel art',
-        generatedImageUrl: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=800&q=80'
+        generatedImageUrl: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=1000&q=80'
       }
     ]
   }

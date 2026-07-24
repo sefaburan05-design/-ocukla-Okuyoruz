@@ -354,16 +354,16 @@ export const StoryForm: React.FC<StoryFormProps> = ({ onGenerate, isLoading, err
                 : 'border-purple-200 dark:border-purple-700 font-bold text-slate-900 dark:text-slate-100'
             } rounded-2xl text-xs sm:text-sm outline-none cursor-pointer transition`}
           >
-            <option value="" disabled className="text-slate-400 font-bold text-xs sm:text-sm">
+            <option value="" disabled className="bg-white dark:bg-slate-900 text-slate-400 font-bold text-xs sm:text-sm">
               {`Lütfen ${contentType === 'Masal' ? 'Masalın' : contentType === 'Hikaye' ? 'Hikayenin' : 'Şiirin'} Konusunu Seçiniz`}
             </option>
-            <option value="Milli ve Manevi Değerlerimiz">🇹🇷 Milli ve Manevi Değerlerimiz & Erdemler</option>
-            <option value="Eğlenceli Macera">🚀 Eğlenceli Macera</option>
-            <option value="Uyku Vakti & Rahatlatıcı">🌙 Uyku Vakti (Sakinleştirici)</option>
-            <option value="Eğitici & Bilgi Verici">💡 Eğitici & Öğretici</option>
-            <option value="Komik & Kahkaha Dolu">😄 Komik & Kahkaha Dolu</option>
-            <option value="Doğa ve Hayvan Sevgisi">🐾 Doğa ve Hayvan Sevgisi</option>
-            <option value="Dürüstlük ve Yardımlaşma">🤝 Dürüstlük, Paylaşım ve Yardımlaşma</option>
+            <option value="Milli ve Manevi Değerlerimiz" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">🇹🇷 Milli ve Manevi Değerlerimiz & Erdemler</option>
+            <option value="Eğlenceli Macera" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">🚀 Eğlenceli Macera</option>
+            <option value="Uyku Vakti & Rahatlatıcı" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">🌙 Uyku Vakti (Sakinleştirici)</option>
+            <option value="Eğitici & Bilgi Verici" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">💡 Eğitici & Öğretici</option>
+            <option value="Komik & Kahkaha Dolu" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">😄 Komik & Kahkaha Dolu</option>
+            <option value="Doğa ve Hayvan Sevgisi" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">🐾 Doğa ve Hayvan Sevgisi</option>
+            <option value="Dürüstlük ve Yardımlaşma" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">🤝 Dürüstlük, Paylaşım ve Yardımlaşma</option>
           </select>
         </div>
 

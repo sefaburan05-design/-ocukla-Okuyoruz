@@ -27,11 +27,11 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="max-w-7xl mx-auto px-2.5 sm:px-6 py-2.5 sm:py-4 flex flex-col sm:flex-row items-center justify-between gap-2.5 sm:gap-5">
         
         {/* Brand & Logo */}
-        <div 
-          onClick={() => setActiveTab('create')} 
-          className="flex items-center gap-2 sm:gap-3 cursor-pointer group shrink-0 w-full sm:w-auto justify-between sm:justify-start"
-        >
-          <div className="flex items-center gap-2.5 sm:gap-3.5">
+        <div className="flex items-center justify-between sm:justify-start w-full sm:w-auto shrink-0 gap-2 sm:gap-3">
+          <div 
+            onClick={() => setActiveTab('create')} 
+            className="flex items-center gap-2.5 sm:gap-3.5 cursor-pointer group shrink-0"
+          >
             {/* Whimsical Magic Book & Star Logo */}
             <div className="relative rounded-xl sm:rounded-2xl bg-gradient-to-tr from-purple-600 via-indigo-600 to-pink-500 p-0.5 shadow-md shadow-purple-200 dark:shadow-none group-hover:scale-105 transition duration-300 shrink-0 w-10 h-10 sm:w-12 sm:h-12">
               <div className="w-full h-full bg-slate-900 rounded-[10px] sm:rounded-[14px] flex items-center justify-center relative overflow-hidden">
@@ -64,7 +64,11 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Quick Mobile Theme Button */}
           <button
-            onClick={onToggleSiteTheme}
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleSiteTheme();
+            }}
             className={`sm:hidden p-2 rounded-xl border transition flex items-center justify-center text-xs font-bold cursor-pointer shrink-0 shadow-xs ${
               siteTheme === 'dark'
                 ? 'bg-white text-slate-950 border-slate-200 hover:bg-slate-100'

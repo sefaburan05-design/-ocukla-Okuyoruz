@@ -1,7 +1,7 @@
 import express from 'express';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI, Modality } from '@google/genai';
 import { validateStoryFormSafety, checkTextSafety } from './src/utils/safetyFilter';
 
 async function startServer() {
@@ -132,7 +132,7 @@ JSON Formatı:
         "Metin veya şiir kıtası 1...",
         "Metin veya şiir kıtası 2..."
       ],
-      "imagePrompt": "A cute whimsical children storybook illustration of ${childName}, a happy ${childAge || 6} year old child in ${location || 'a beautiful meadow'}, pastel colors, soft lighting, 8k disney style."
+      "imagePrompt": "Detailed English description of chapter 1 specific scene, characters, cute animals, and fairytale environment."
     },
     {
       "chapterTitle": "${isSiir ? '' : 'Sevgi Dolu Paylaşım'}",
@@ -140,7 +140,7 @@ JSON Formatı:
         "Metin veya şiir kıtası 1...",
         "Metin veya şiir kıtası 2..."
       ],
-      "imagePrompt": "Beautiful fairytale scene of ${childName} learning about kindness and sharing with friends in ${location || 'a village'}, warm sunlight, colorful storybook art."
+      "imagePrompt": "Detailed English description of chapter 2 specific scene, emotions, and fairytale environment."
     },
     {
       "chapterTitle": "${isSiir ? '' : 'Dayanışma ve Erdem Sevinci'}",
@@ -148,14 +148,15 @@ JSON Formatı:
         "Metin veya şiir kıtası 1...",
         "Metin veya şiir kıtası 2..."
       ],
-      "imagePrompt": "Magical storybook illustration of ${childName} celebrating good values, glowing golden light, cute animal friends, detailed digital art."
+      "imagePrompt": "Detailed English description of chapter 3 happy ending, celebration, magical background, and friends."
     }
   ]
 }
+IMPORTANT FOR IMAGE PROMPTS: Each 'imagePrompt' MUST be a unique, vivid English prompt describing the EXACT specific action, characters, objects, and magical setting in THAT chapter (e.g. 'A joyful 6 year old child with brown hair playing with a glowing blue bird in a magical blooming meadow with distant fairytale castle, vibrant children storybook digital art, soft lighting'). NEVER repeat generic prompts!
 `;
 
       const response = await ai.models.generateContent({
-        model: 'gemini-3.6-flash',
+        model: 'gemini-2.5-flash',
         contents: prompt,
         config: {
           responseMimeType: 'application/json'
@@ -172,23 +173,16 @@ JSON Formatı:
         parsedData = JSON.parse(cleaned);
       }
 
-      // Curated fast-loading storybook illustrations for instant reliable image fallback
-      const STORY_ILLUSTRATIONS = [
-        'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1000&q=80',
-        'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=1000&q=80',
-        'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&w=1000&q=80',
-        'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=1000&q=80',
-        'https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=1000&q=80',
-        'https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=1000&q=80'
-      ];
-
       if (parsedData.chapters && Array.isArray(parsedData.chapters)) {
         parsedData.chapters = parsedData.chapters.map((ch: any, index: number) => {
           const rawPrompt = ch.imagePrompt || `storybook illustration for ${childName} chapter ${index + 1}`;
           const cleanPrompt = rawPrompt.replace(/[^a-zA-Z0-9 ,]/g, '');
-          const seed = Math.floor(Math.random() * 90000) + 10000;
-          // Synchronous Pollinations AI image URL generated with prompt + fallback
-          const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(`children storybook illustration, ${cleanPrompt}, pastel colors, cute art style, 8k`)}?width=800&height=500&nologo=true&seed=${seed}`;
+          const seed = Math.floor(Math.random() * 900000) + 100000;
+          
+          // Pollinations AI high-quality storybook illustration matching prompt
+          const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(
+            `whimsical digital children storybook illustration, fairytale art style, ${cleanPrompt}, cute character, pastel colors, 8k`
+          )}?width=1000&height=562&nologo=true&seed=${seed}`;
           
           return {
             ...ch,
@@ -206,6 +200,62 @@ JSON Formatı:
         error: 'İçerik oluşturulurken bir hata meydana geldi.',
         details: error.message
       });
+    }
+  });
+
+  // Natural Human Voice Text-To-Speech (TTS) Endpoint using Gemini TTS
+  app.post('/api/tts', async (req, res) => {
+    try {
+      const { text, voiceName = 'Kore' } = req.body;
+      if (!text) {
+        return res.status(400).json({ error: 'Seslendirilecek metin zorunludur.' });
+      }
+
+      const promptText = `Lütfen aşağıdaki Türkçe metni şefkatli bir masal anlatıcısı tonunda Türkçe seslendir:\n"${text.substring(0, 450)}"`;
+
+      const response = await ai.models.generateContent({
+        model: 'gemini-3.1-flash-tts-preview',
+        contents: promptText,
+        config: {
+          responseModalities: [Modality.AUDIO],
+          speechConfig: {
+            voiceConfig: {
+              prebuiltVoiceConfig: { voiceName: voiceName || 'Kore' },
+            },
+          },
+        },
+      });
+
+      const candidatePart = response.candidates?.[0]?.content?.parts?.[0];
+      const base64Audio = candidatePart?.inlineData?.data;
+      const mimeType = candidatePart?.inlineData?.mimeType || 'audio/mp3';
+
+      if (base64Audio) {
+        return res.json({ audio: base64Audio, mimeType });
+      } else {
+        return res.status(500).json({ error: 'Ses üretilemedi.' });
+      }
+    } catch (error: any) {
+      console.warn('Gemini TTS endpoint error:', error?.message);
+      return res.status(500).json({ error: error?.message || 'TTS hatası' });
+    }
+  });
+
+  // Dynamic Image Generation Endpoint
+  app.post('/api/generate-chapter-image', async (req, res) => {
+    try {
+      const { prompt: rawPrompt, chapterTitle, storyTitle } = req.body;
+      const descPrompt = rawPrompt || `${storyTitle || 'masal'} ${chapterTitle || ''}`;
+      const cleanPrompt = descPrompt.replace(/[^a-zA-Z0-9 ,]/g, '');
+      const seed = Math.floor(Math.random() * 900000) + 100000;
+
+      const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(
+        `cute whimsical children storybook fairytale illustration, ${cleanPrompt}, pastel colors, detailed character, 8k`
+      )}?width=1000&height=562&nologo=true&seed=${seed}`;
+
+      return res.json({ imageUrl: pollinationsUrl });
+    } catch (error: any) {
+      return res.status(500).json({ error: error?.message });
     }
   });
 
