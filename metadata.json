@@ -1,0 +1,6 @@
+{
+  "name": "Çocukla Okuyoruz",
+  "description": "Çocuklar için milli ve manevi değerlerimize uygun, kişiselleştirilebilir sesli ve resimli masal, hikaye ve şiir platformu.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
