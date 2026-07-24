@@ -3,67 +3,93 @@
 @variant dark (&:where(.dark, .dark *));
 
 @media print {
-  /* Hide all regular page content by default */
-  body * {
-    visibility: hidden;
+  @page {
+    size: A4 landscape;
+    margin: 0mm;
   }
 
-  /* Show ONLY certificate card during print */
-  .certificate-printable,
-  .certificate-printable * {
-    visibility: visible !important;
-  }
-
-  .certificate-printable {
-    position: absolute !important;
-    left: 0 !important;
-    top: 0 !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    margin: 0 !important;
-    padding: 20px !important;
-    border: 4px double #d97706 !important;
-    box-shadow: none !important;
+  html, body {
     background: #ffffff !important;
-    color: #0f172a !important;
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-  }
-
-  /* Show ONLY coloring canvas during print */
-  .coloring-printable,
-  .coloring-printable * {
-    visibility: visible !important;
-  }
-
-  .coloring-printable {
-    position: absolute !important;
-    left: 0 !important;
-    top: 0 !important;
-    width: 100% !important;
-    height: auto !important;
+    color: #000000 !important;
     margin: 0 !important;
-    padding: 10px !important;
-    box-shadow: none !important;
-    background: #ffffff !important;
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    overflow: visible !important;
   }
 
-  /* Force background color printing */
+  /* Hide all non-printable UI elements */
+  header, 
+  footer, 
+  nav, 
+  aside, 
+  button:not(.print-show), 
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* Force background colors and images in print */
   * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
 
-  body, html, #root {
+  /* Certificate Printable Card Positioning */
+  .certificate-printable {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: none !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 24px !important;
+    box-shadow: none !important;
+    border: 8px double #d97706 !important;
     background: #ffffff !important;
     color: #0f172a !important;
-    width: 100% !important;
-    height: auto !important;
+    z-index: 999999 !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    page-break-before: avoid !important;
+    page-break-after: avoid !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Coloring Printable Card Positioning */
+  .coloring-printable {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
     margin: 0 !important;
-    padding: 0 !important;
+    padding: 16px !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
+    z-index: 999999 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    page-break-before: avoid !important;
+    page-break-after: avoid !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .certificate-printable *,
+  .coloring-printable * {
+    visibility: visible !important;
   }
 }
+
 
 

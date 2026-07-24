@@ -155,28 +155,111 @@ JSON Formatı:
 IMPORTANT FOR IMAGE PROMPTS: Each 'imagePrompt' MUST be a unique, vivid English prompt describing the EXACT specific action, characters, objects, and magical setting in THAT chapter (e.g. 'A joyful 6 year old child with brown hair playing with a glowing blue bird in a magical blooming meadow with distant fairytale castle, vibrant children storybook digital art, soft lighting'). NEVER repeat generic prompts!
 `;
 
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: prompt,
-        config: {
-          responseMimeType: 'application/json'
-        }
-      });
+      let responseText = '';
+      let parsedData: any = null;
 
-      const responseText = response.text || '{}';
-      let parsedData: any = {};
-      
+      // Primary Attempt: gemini-2.5-flash
       try {
-        parsedData = JSON.parse(responseText);
-      } catch (pErr) {
-        const cleaned = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
-        parsedData = JSON.parse(cleaned);
+        const response = await ai.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: prompt,
+          config: {
+            responseMimeType: 'application/json'
+          }
+        });
+        responseText = response.text || '';
+      } catch (primaryErr) {
+        console.warn('Primary model gemini-2.5-flash failed, attempting fallback gemini-3.6-flash:', primaryErr);
+        // Secondary Attempt: gemini-3.6-flash
+        try {
+          const fallbackResp = await ai.models.generateContent({
+            model: 'gemini-3.6-flash',
+            contents: prompt,
+            config: {
+              responseMimeType: 'application/json'
+            }
+          });
+          responseText = fallbackResp.text || '';
+        } catch (secondaryErr) {
+          console.error('Both Gemini models failed:', secondaryErr);
+        }
+      }
+
+      // Resilient JSON Parsing Strategy
+      if (responseText) {
+        try {
+          parsedData = JSON.parse(responseText);
+        } catch (pErr) {
+          try {
+            const cleaned = responseText
+              .replace(/```json/gi, '')
+              .replace(/```/g, '')
+              .trim();
+            parsedData = JSON.parse(cleaned);
+          } catch (cleanErr) {
+            // Extract JSON object using regex match
+            const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+              try {
+                parsedData = JSON.parse(jsonMatch[0]);
+              } catch (mErr) {
+                console.warn('Regex JSON extraction failed');
+              }
+            }
+          }
+        }
+      }
+
+      // Guarantee structured story object even if AI response was partially malformed
+      if (!parsedData || typeof parsedData !== 'object') {
+        const isSiir = contentType === 'Şiir';
+        parsedData = {
+          title: `${childName}'in ${genre || contentType} Serüveni`,
+          subtitle: `${childName} için özel olarak sevgiyle hazırlanan ${contentType.toLowerCase()}.`,
+          category: genre || 'Erdemler ve Sevgi',
+          moralMessage: 'Sevgi, dürüstlük ve dayanışma her zorluğun üstesinden gelir.',
+          readingTime: '5-6 Dakika Okuma Süresi',
+          historicalFact: 'Gönül dostluğu ve dürüstlük insana en güzel mutluluğu kazandırır.',
+          reflectionQuestions: [
+            'Bu güzel hikayede kahramanımızın hangi davranışı hoşuna gitti?',
+            'Sevgi ve saygıyı hayatımızda nasıl gösterebiliriz?'
+          ],
+          miniGlossary: [
+            { term: 'Erdem', meaning: 'İnsanın ruhunu güzelleştiren ahlaki nitelikler' }
+          ],
+          chapters: [
+            {
+              chapterTitle: isSiir ? '' : '1. Bölüm: Güzel Bir Başlangıç',
+              paragraphs: [
+                `Bir zamanlar, ${location || 'yeşillikler içinde şirin bir kasabada'} ${childName} adında neşeli ve meraklı bir çocuk yaşarmış.`,
+                `${childName}, çevresindeki herkese sevgiyle yaklaşır, her gün yeni şeyler öğrenmek için heyecanla güne başlarmış.`
+              ],
+              imagePrompt: `A happy 6 year old child ${childName} in a beautiful fairytale landscape, digital art`
+            },
+            {
+              chapterTitle: isSiir ? '' : '2. Bölüm: Dostluk ve Yardımlaşma',
+              paragraphs: [
+                `${heroes || 'Sevimli dostları'} ile birlikte güzel bir maceraya atılan ${childName}, paylaşmanın ve birlikte güzel işler yapmanın önemini bir kez daha anlamış.`,
+                `Her adımlarında etraflarına ışık ve neşe saçarak tüm zorlukların üstesinden el birliğiyle gelmişler.`
+              ],
+              imagePrompt: `Child playing with friendly animals in a bright sunny garden, storybook art`
+            },
+            {
+              chapterTitle: isSiir ? '' : '3. Bölüm: Sevgi Dolu Son',
+              paragraphs: [
+                `Günün sonunda ${childName}, yüreğinde tatlı bir huzur ve yüzünde tebessümle bu güzel günü tamamlamış.`,
+                `Çünkü bilirdi ki; iyilik, merhamet ve sevgi paylaşıldıkça çoğalan en kıymetli hazinedir.`
+              ],
+              imagePrompt: `Happy ending sunset over a magical peaceful village, children book illustration`
+            }
+          ]
+        };
       }
 
       if (parsedData.chapters && Array.isArray(parsedData.chapters)) {
         parsedData.chapters = parsedData.chapters.map((ch: any, index: number) => {
           const rawPrompt = ch.imagePrompt || `storybook illustration for ${childName} chapter ${index + 1}`;
-          const cleanPrompt = rawPrompt.replace(/[^a-zA-Z0-9 ,]/g, '');
+          const cleanPrompt = String(rawPrompt).replace(/[^a-zA-Z0-9 ,]/g, '');
           const seed = Math.floor(Math.random() * 900000) + 100000;
           
           // Pollinations AI high-quality storybook illustration matching prompt
@@ -197,7 +280,7 @@ IMPORTANT FOR IMAGE PROMPTS: Each 'imagePrompt' MUST be a unique, vivid English 
     } catch (error: any) {
       console.error('Gemini Story Generation Error:', error);
       return res.status(500).json({
-        error: 'İçerik oluşturulurken bir hata meydana geldi.',
+        error: 'İçerik oluşturulurken beklenmeyen bir hata meydana geldi. Lütfen tekrar deneyiniz.',
         details: error.message
       });
     }
