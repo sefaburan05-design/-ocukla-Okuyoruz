@@ -2,10 +2,11 @@ import express from 'express';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI } from '@google/genai';
+import { validateStoryFormSafety, checkTextSafety } from './src/utils/safetyFilter';
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = Number(process.env.PORT) || 3000;
 
   app.use(express.json());
 
@@ -26,6 +27,23 @@ async function startServer() {
 
       if (!childName) {
         return res.status(400).json({ error: 'Çocuğun adı zorunludur.' });
+      }
+
+      // Strict Safety & Pedagogical Filter Check
+      const safetyCheck = validateStoryFormSafety({
+        childName,
+        heroes,
+        location,
+        genre,
+        specialDetails
+      });
+
+      if (!safetyCheck.isSafe) {
+        return res.status(400).json({
+          isSafetyViolation: true,
+          error: safetyCheck.detectedReason || 'Girdiğiniz bilgilerde çocuk pedagojisine aykırı, küfür, hakaret, tehdit, şantaj veya zararlı ifadeler tespit edildi.',
+          violatingField: safetyCheck.violatingField
+        });
       }
 
       const ageLabel = childAge ? `${childAge} Yaş Grubu` : 'Genel Çocuk Yaş Grubu';
