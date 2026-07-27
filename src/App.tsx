@@ -5,7 +5,6 @@ import { StoryReader } from './components/StoryReader';
 import { LibraryView } from './components/LibraryView';
 import { AboutView } from './components/AboutView';
 import { FeedbackModal } from './components/FeedbackModal';
-import { AdSenseUnit } from './components/AdSenseUnit';
 import { Story, StoryFormData } from './types';
 import { SAMPLE_STORIES } from './data/sampleStories';
 import { getFullLibraryStories } from './data/libraryGenerator';
@@ -179,16 +178,11 @@ export default function App() {
           onOpenFeedback={() => setIsFeedbackOpen(true)}
         />
 
-        {/* Main Layout Container with Vertical Side Ads */}
-        <div className="max-w-7xl mx-auto px-2 sm:px-4 py-6 flex gap-4 items-start justify-center">
+        {/* Main Layout Container */}
+        <div className="max-w-4xl mx-auto px-2 sm:px-4 py-6">
           
-          {/* Left Vertical Ad Banner (Skyscraper) - Desktop */}
-          <aside className="hidden xl:block w-48 shrink-0 sticky top-20 space-y-3 print:hidden">
-            <AdSenseUnit slot="1606000001" label="Google AdSense (Sol)" />
-          </aside>
-
           {/* Main View Area */}
-          <main className="flex-1 min-w-0 max-w-3xl">
+          <main className="w-full">
             {activeTab === 'create' && (
               <StoryForm
                 onGenerate={handleGenerateStory}
@@ -226,12 +220,6 @@ export default function App() {
               />
             )}
           </main>
-
-          {/* Right Vertical Ad Banner (Skyscraper) - Desktop */}
-          <aside className="hidden xl:block w-48 shrink-0 sticky top-20 space-y-3 print:hidden">
-            <AdSenseUnit slot="1606000002" label="Google AdSense (Sağ)" />
-          </aside>
-
         </div>
       </div>
 
