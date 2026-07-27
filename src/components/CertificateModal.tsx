@@ -32,6 +32,14 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({ story, onClo
     year: 'numeric'
   });
 
+  const handlePrint = () => {
+    document.body.classList.add('is-printing-certificate');
+    window.print();
+    setTimeout(() => {
+      document.body.classList.remove('is-printing-certificate');
+    }, 1000);
+  };
+
   return (
     <div 
       onClick={onClose}
@@ -206,10 +214,33 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({ story, onClo
               <span className="text-slate-900 font-extrabold">{formattedDate}</span>
             </div>
 
-            <div className="text-center">
-              <div className="w-11 h-11 sm:w-14 sm:h-14 bg-gradient-to-tr from-red-600 to-red-500 text-white rounded-full flex flex-col items-center justify-center font-black mx-auto border-2 border-amber-400 text-[10px] sm:text-xs shadow-md relative group">
-                <span className="text-xs sm:text-sm leading-none">🇹🇷</span>
-                <span className="text-[8px] sm:text-[9px] font-black tracking-tighter uppercase text-amber-200 mt-0.5">MİLLİ</span>
+            <div className="text-center flex flex-col items-center">
+              {/* Glossy Circular Turkish Flag Badge */}
+              <div className="w-14 h-14 sm:w-20 sm:h-20 relative rounded-full p-1 bg-gradient-to-b from-amber-200 via-amber-400 to-amber-600 shadow-lg border border-amber-500/80 shrink-0">
+                <div className="w-full h-full rounded-full bg-gradient-to-tr from-[#b30006] via-[#e30a17] to-[#ff2a34] relative overflow-hidden flex items-center justify-center border border-amber-300/60 shadow-inner">
+                  
+                  {/* Glossy glass reflection overlay */}
+                  <div className="absolute -top-1 -left-1 -right-1 h-1/2 bg-gradient-to-b from-white/35 to-transparent rounded-t-full pointer-events-none" />
+
+                  {/* Flag Crescent and Star SVG */}
+                  <svg viewBox="0 0 100 100" className="w-10 h-10 sm:w-14 sm:h-14 drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)]">
+                    <defs>
+                      <mask id="tr-flag-crescent-mask">
+                        <circle cx="40" cy="50" r="28" fill="white" />
+                        <circle cx="48" cy="50" r="22.5" fill="black" />
+                      </mask>
+                    </defs>
+
+                    {/* Crescent Moon in pure white */}
+                    <rect x="0" y="0" width="100" height="100" fill="white" mask="url(#tr-flag-crescent-mask)" />
+
+                    {/* 5-Point Star in pure white */}
+                    <polygon 
+                      points="58,50 66.1,47.2 66.3,38.6 71.5,45.4 79.7,43.0 74.8,50 79.7,57.0 71.5,54.6 66.3,61.4 66.1,52.8" 
+                      fill="white" 
+                    />
+                  </svg>
+                </div>
               </div>
             </div>
 
@@ -231,7 +262,7 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({ story, onClo
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => window.print()}
+              onClick={handlePrint}
               className="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black rounded-xl text-xs shadow-md transition cursor-pointer flex items-center gap-2"
             >
               <Printer className="w-4 h-4" />

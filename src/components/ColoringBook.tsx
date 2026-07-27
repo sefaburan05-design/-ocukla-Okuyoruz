@@ -348,6 +348,14 @@ export const ColoringBook: React.FC<ColoringBookProps> = ({ story, onClose }) =>
     link.click();
   };
 
+  const handlePrint = () => {
+    document.body.classList.add('is-printing-coloring');
+    window.print();
+    setTimeout(() => {
+      document.body.classList.remove('is-printing-coloring');
+    }, 1000);
+  };
+
   return (
     <div 
       onClick={onClose}
@@ -530,7 +538,7 @@ export const ColoringBook: React.FC<ColoringBookProps> = ({ story, onClose }) =>
         </div>
 
         {/* Canvas & Printable View */}
-        <div className="relative rounded-2xl overflow-hidden bg-white border-2 border-slate-300 shadow-inner flex items-center justify-center min-h-[350px] sm:min-h-[460px]">
+        <div className="relative rounded-2xl overflow-hidden bg-white border-2 border-slate-300 shadow-inner flex items-center justify-center min-h-[350px] sm:min-h-[460px] coloring-printable">
           
           {!lineArtLoaded && (
             <div className="absolute inset-0 bg-white/90 flex flex-col items-center justify-center space-y-2 z-10 print:hidden">
@@ -565,7 +573,7 @@ export const ColoringBook: React.FC<ColoringBookProps> = ({ story, onClose }) =>
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => window.print()}
+              onClick={handlePrint}
               className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black rounded-xl text-xs shadow-md transition cursor-pointer flex items-center gap-1.5"
             >
               <Printer className="w-4 h-4" />

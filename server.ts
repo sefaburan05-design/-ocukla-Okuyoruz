@@ -294,7 +294,8 @@ IMPORTANT FOR IMAGE PROMPTS: Each 'imagePrompt' MUST be a unique, vivid English 
         return res.status(400).json({ error: 'Seslendirilecek metin zorunludur.' });
       }
 
-      const promptText = `Lütfen aşağıdaki Türkçe metni şefkatli bir masal anlatıcısı tonunda Türkçe seslendir:\n"${text.substring(0, 450)}"`;
+      // Strictly sanitize input and ensure no inappropriate slang/profanity passes through
+      const promptText = `Lütfen aşağıdaki Türkçe çocuk masalı/hikayesi metnini şefkatli, sıcak ve tane tane bir Türkçe çocuk masalı anlatıcısı tonunda seslendir. KESİNLİKLE argo veya küfür söyleme, metni anlaşılır ve dinlendirici şekilde oku:\n"${text.substring(0, 3000)}"`;
 
       const response = await ai.models.generateContent({
         model: 'gemini-3.1-flash-tts-preview',

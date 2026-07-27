@@ -18,7 +18,8 @@ const FORBIDDEN_EXACT_WORDS = new Set([
   'zorbalık', 'zorbalik', 'taciz', 'sövme', 'sovme', 'yavşak', 'yavsak', 'ipne',
   'sürtük', 'surtuk', 'orospuçocuğu', 'orospucocugu', 'döl', 'dol', 'taşak', 'tasak',
   'domuz', 'it', 'köpek', 'itlik', 'kahpelik', 'sürtük', 'göte', 'orospuya',
-  'dönek', 'satılmış', 'şerefsizlik', 'yavşaklık', 'puştluk', 'hıdrellez'
+  'dönek', 'satılmış', 'şerefsizlik', 'yavşaklık', 'puştluk', 'hıdrellez',
+  'çük', 'cuk', 'cük', 'çüke', 'pipi', 'pipilik', 'yosma', 'yarag'
 ]);
 
 // Stem or substring patterns that are unambiguous indicators of violation

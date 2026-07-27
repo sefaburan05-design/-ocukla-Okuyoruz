@@ -406,11 +406,12 @@ export const StoryReader: React.FC<StoryReaderProps> = ({
 
     stopSpeech();
 
-    // Target clean concise text (title + intro/first chapter, max 380 chars) for fast ~1.5s TTS generation
-    const firstChapter = story.chapters[0];
-    const firstPara = firstChapter?.paragraphs[0] || story.subtitle || '';
-    const textToNarrate = `${story.title}. ${firstChapter?.chapterTitle ? firstChapter.chapterTitle + '. ' : ''}${firstPara}`.substring(0, 380);
-    const cacheKey = `${selectedGeminiVoice}_${story.id}_${textToNarrate.substring(0, 30)}`;
+    // Build complete story narration (title, subtitle, chapters & paragraphs) up to 3000 characters for rich full-story audio
+    const allChaptersText = story.chapters
+      .map((ch) => `${ch.chapterTitle ? ch.chapterTitle + '. ' : ''}${ch.paragraphs.join(' ')}`)
+      .join(' ');
+    const textToNarrate = `${story.title}. ${story.subtitle || ''}. ${allChaptersText}`.substring(0, 3000);
+    const cacheKey = `${selectedGeminiVoice}_${story.id}_${textToNarrate.length}`;
 
     // Check cache first for 0ms instant play
     if (ttsAudioCacheRef.current.has(cacheKey)) {
@@ -711,39 +712,19 @@ export const StoryReader: React.FC<StoryReaderProps> = ({
           <span>Kütüphane</span>
         </button>
 
-        {/* Reading Theme Selector (Light, Dark, Sepia) */}
+        {/* Reading Theme Toggle (Okuma Modu - Sepia Tone) */}
         <div className="flex items-center gap-1 bg-black/5 p-1 rounded-xl">
           <button
-            onClick={() => setReadingTheme('light')}
-            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
-              readingTheme === 'light' ? 'bg-white text-purple-700 shadow-xs' : 'opacity-70 hover:opacity-100'
+            onClick={() => setReadingTheme(readingTheme === 'sepia' ? 'light' : 'sepia')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+              readingTheme === 'sepia' 
+                ? 'bg-[#ebd8ba] text-[#2c2016] shadow-sm ring-1 ring-[#cbb48e]' 
+                : 'hover:bg-black/5 text-slate-700 dark:text-slate-200'
             }`}
-            title="Gündüz Modu"
+            title="Sıcak kağıt renkli Okuma Modunu Aç/Kapat"
           >
-            <span className="text-amber-500">☀️</span>
-            <span className="hidden sm:inline">Gündüz</span>
-          </button>
-
-          <button
-            onClick={() => setReadingTheme('sepia')}
-            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
-              readingTheme === 'sepia' ? 'bg-[#ebd8ba] text-[#2c2016] shadow-xs' : 'opacity-70 hover:opacity-100'
-            }`}
-            title="Sepya / Kitap Modu"
-          >
-            <BookOpen className="w-3.5 h-3.5 text-amber-800" />
-            <span className="hidden sm:inline">Sepya</span>
-          </button>
-
-          <button
-            onClick={() => setReadingTheme('dark')}
-            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
-              readingTheme === 'dark' ? 'bg-slate-700 text-amber-300 shadow-xs' : 'opacity-70 hover:opacity-100'
-            }`}
-            title="Gece / Koyu Mod"
-          >
-            <span className="text-indigo-300">🌙</span>
-            <span className="hidden sm:inline">Gece</span>
+            <BookOpen className="w-4 h-4 text-amber-800" />
+            <span>Okuma Modu</span>
           </button>
         </div>
 
